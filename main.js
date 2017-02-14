@@ -15,7 +15,8 @@ $.ajaxPrefilter( function ( options, originalOptions, jqXHR){
         "click .update-count":"updateCount"
       },
     updateCount:function(){
-      userChannel.trigger('user-count:increment');
+      var userCountView = new UserCountView();
+      userCountView.render(true);
       },
     render: function (){
       var users = new Users();
@@ -23,7 +24,7 @@ $.ajaxPrefilter( function ( options, originalOptions, jqXHR){
       users.fetch({
         success: function (users) {
           var user1 = []
-          var template = Handlebars.compile('<table class="table striped"><thead><tr><th>First Name</th><th>Last Name</th></tr><thead><tbody>{{#each users}}<tr><td>{{first_name}}</td><td>{{last_name}}</td></tr>{{/each}}></tbody></table><button class="update-count">Update Count</button>');
+          var template = Handlebars.compile('<table class="table striped"><thead><tr><th>First Name</th><th>Last Name</th></tr><thead><tbody>{{#each users}}<tr><td>{{first_name}}</td><td>{{last_name}}</td></tr>{{/each}}></tbody></table><button class="update-count">Update Count</button><br><br><a href="#count">UserCount</a>');
           that.$el.html(template({users:users.toJSON()}));
         }
       });
@@ -37,19 +38,33 @@ $.ajaxPrefilter( function ( options, originalOptions, jqXHR){
 
   var UserCountView = Backbone.View.extend({
     el:'.page',
-    render: function(){
+    initialize: function (){
+      userChannel.on('user-count:increment', function() {
+      var userCount = new UserCount();
+      userCount.fetch({
+        success: function (user) {
+          console.log(user.get('count') + 1);
+        }
+      });
+    });
+    },
+    render: function(incrementCount){
       var that = this;
+
       var userCount = new UserCount();
       userCount.fetch({
         success: function (user) {
           console.log(user.get('count'));
           var template = Handlebars.compile('<h2>Number of Users</h2><h1>{{userCount}}<h1>');
-          that.$el.html(template({userCount:user.get('count')}));
+          userCount = user.get('count');
+          userCount = incrementCount ? userCount + 1 : userCount;
+          that.$el.html(template({userCount:userCount}));
         }
       });
       // var userChannel = Backbone.Radio.channel('user');
 
-    }
+    },
+
   });
 
 var Router = Backbone.Router.extend({
@@ -57,6 +72,7 @@ var Router = Backbone.Router.extend({
     '': 'home',
     'count': 'userCount'
   }});
+
 var userList = new UserListView();
 var userCount = new UserCountView();
 var router = new Router();
