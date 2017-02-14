@@ -36,7 +36,7 @@ $.ajaxPrefilter( function ( options, originalOptions, jqXHR){
   });
 
   var UserCountView = Backbone.View.extend({
-    el:'.count',
+    el:'.page',
     render: function(){
       var that = this;
       var userCount = new UserCount();
